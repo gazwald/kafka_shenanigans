@@ -8,8 +8,6 @@ from typing import List, Dict
 
 from kafka import KafkaProducer
 
-client = boto3.client("ssm")
-
 
 class MessageType(str, Enum):
     heartbeat = "pricing.PricingHeartbeat"
@@ -22,6 +20,7 @@ def load_config(path: str = "config.yml") -> Dict:
 
 
 CONFIG = load_config()
+client = boto3.client("ssm", region_name=CONFIG["region"])
 
 
 def get_ssm(path: str) -> str:
@@ -35,7 +34,12 @@ def set_up_producer(
     bootstrap_servers: List[str] = CONFIG["bootstrap_servers"],
     client_id: str = CONFIG["app_name"],
 ):
-    return KafkaProducer(bootstrap_servers=bootstrap_servers, client_id=client_id)
+    return KafkaProducer(
+        bootstrap_servers=bootstrap_servers,
+        client_id=client_id,
+        security_protocol="SSL",
+        api_version=(1, 0, 0),
+    )
 
 
 def set_up_context(
