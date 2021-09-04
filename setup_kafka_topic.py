@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
+import yaml
+from typing import Dict
 from kafka.admin import KafkaAdminClient, NewTopic
 
-bootstrap_servers = [
-    "b-1.oanda-test.8zyfgp.c4.kafka.ap-southeast-2.amazonaws.com:9092",
-    "b-2.oanda-test.8zyfgp.c4.kafka.ap-southeast-2.amazonaws.com:9092",
-]
+
+def load_config(path: str = "config.yml") -> Dict:
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+
+CONFIG = load_config()
+client_id = CONFIG['app_name'] + '-create-topic'
 
 admin_client = KafkaAdminClient(
-    bootstrap_servers=bootstrap_servers, client_id="oanda-test-create-topic"
+    bootstrap_servers=CONFIG['bootstrap_servers'], client_id=client_id
 )
 
 topic_list = [
-    NewTopic(name="oanda-test-topic-aud_usd", num_partitions=2, replication_factor=2)
+    NewTopic(name=CONFIG['topic'], num_partitions=2, replication_factor=2)
 ]
 admin_client.create_topics(new_topics=topic_list, validate_only=False)
