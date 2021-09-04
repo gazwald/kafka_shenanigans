@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 import boto3
 import v20
-import yaml
 
 from enum import Enum
-from typing import List, Dict
+from typing import List
 
+from kafka import KafkaProducer
 
 client = boto3.client("ssm")
+APPLICATION_NAME = 'oanda-test'
 
 
 class MessageType(str, Enum):
@@ -15,14 +16,25 @@ class MessageType(str, Enum):
     price = 'pricing.ClientPrice'
 
 
+def get_ssm(path: str) -> str:
+    r = client.get_parameter(Name=path, WithDecryption=True)
+
+    if "Parameter" in r.keys():
+        return r["Parameter"]["Value"]
+
+
+def set_up_producer(bootstrap: List[str], client_id: str = APPLICATION_NAME):
+    return KafkaProducer(bootstrap_servers=bootstrap, client_id=client_id)
+
+
 def set_up_context(
-    api_token: str,
     hostname: str = "stream-fxtrade.oanda.com",
     port: int = 443,
     ssl: bool = True,
-    application: str = "oanda-test",
+    application: str = APPLICATION_NAME,
     datetime_format: str = "UNIX",
 ):
+    api_token: str = get_ssm("/oanda/key")
     ctx = v20.Context(
         hostname,
         port,
@@ -35,18 +47,10 @@ def set_up_context(
     return ctx
 
 
-def get_ssm(path: str) -> str:
-    r = client.get_parameter(Name=path, WithDecryption=True)
-
-    if "Parameter" in r.keys():
-        return r["Parameter"]["Value"]
-
-
 def main():
     instruments: List[str] = ['AUD_USD']
-    api_token: str = get_ssm("/oanda/key")
     account_id: str = get_ssm("/oanda/account")
-    ctx = set_up_context(api_token)
+    ctx = set_up_context()
     r = ctx.pricing.stream(
         account_id,
         snapshot=True,
@@ -64,8 +68,13 @@ def main():
         except KeyboardInterrupt:
             break
         else:
-            print(message)
+            producer.send('oanda-test-topic-aud_usd', message)
 
 
 if __name__ == "__main__":
+    bootstrap_servers: List[str] = [
+        'b-1.oanda-test.8zyfgp.c4.kafka.ap-southeast-2.amazonaws.com:9092',
+        'b-2.oanda-test.8zyfgp.c4.kafka.ap-southeast-2.amazonaws.com:9092'
+    ]
+    producer = set_up_producer(bootstrap_servers)
     main()
