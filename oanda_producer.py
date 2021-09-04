@@ -30,18 +30,15 @@ def get_ssm(path: str) -> str:
         return r["Parameter"]["Value"]
 
 
-def set_up_producer(
-    bootstrap_servers: List[str] = CONFIG["bootstrap_servers"],
-    client_id: str = CONFIG["app_name"],
-):
+def set_up_producer():
     return KafkaProducer(
-        bootstrap_servers=bootstrap_servers,
-        client_id=client_id,
-        security_protocol="SSL",
+        bootstrap_servers=CONFIG['kafka']["bootstrap_servers"],
+        client_id=CONFIG["app_name"],
+        security_protocol=CONFIG["kafka"]["protocol"],
         api_version=(
-            CONFIG['protocol_version']['major'],
-            CONFIG['protocol_version']['minor'],
-            CONFIG['protocol_version']['patch'],
+            CONFIG['kafka']['protocol_version']['major'],
+            CONFIG['kafka']['protocol_version']['minor'],
+            CONFIG['kafka']['protocol_version']['patch'],
         )
     )
 
@@ -50,7 +47,6 @@ def set_up_context(
     hostname: str = "stream-fxtrade.oanda.com",
     port: int = 443,
     ssl: bool = True,
-    application: str = CONFIG["app_name"],
     datetime_format: str = "UNIX",
 ):
     api_token: str = get_ssm(CONFIG["api_token"])
@@ -58,7 +54,7 @@ def set_up_context(
         hostname,
         port,
         ssl,
-        application=application,
+        application=CONFIG["app_name"],
         token=api_token,
         datetime_format=datetime_format,
     )
@@ -88,7 +84,7 @@ def main():
         except KeyboardInterrupt:
             break
         else:
-            producer.send(CONFIG["topic"], message)
+            producer.send(CONFIG['kafka']["topic"], message)
 
 
 if __name__ == "__main__":

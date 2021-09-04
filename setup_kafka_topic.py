@@ -15,11 +15,11 @@ client_id = CONFIG["app_name"] + "-create-topic"
 admin_client = KafkaAdminClient(
     bootstrap_servers=CONFIG["bootstrap_servers"],
     client_id=client_id,
-    security_protocol="SSL",
+    security_protocol=CONFIG['kafka']['protocol'],
     api_version=(
-        CONFIG['protocol_version']['major'],
-        CONFIG['protocol_version']['minor'],
-        CONFIG['protocol_version']['patch'],
+        CONFIG['kafka']['protocol_version']['major'],
+        CONFIG['kafka']['protocol_version']['minor'],
+        CONFIG['kafka']['protocol_version']['patch'],
     )
 )
 
