@@ -38,7 +38,11 @@ def set_up_producer(
         bootstrap_servers=bootstrap_servers,
         client_id=client_id,
         security_protocol="SSL",
-        api_version=(1, 0, 0),
+        api_version=(
+            CONFIG['protocol_version']['major'],
+            CONFIG['protocol_version']['minor'],
+            CONFIG['protocol_version']['patch'],
+        )
     )
 
 

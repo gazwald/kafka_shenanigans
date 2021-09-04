@@ -16,7 +16,11 @@ admin_client = KafkaAdminClient(
     bootstrap_servers=CONFIG["bootstrap_servers"],
     client_id=client_id,
     security_protocol="SSL",
-    api_version=(1, 0, 0),
+    api_version=(
+        CONFIG['protocol_version']['major'],
+        CONFIG['protocol_version']['minor'],
+        CONFIG['protocol_version']['patch'],
+    )
 )
 
 topic_list = [NewTopic(name=CONFIG["topic"], num_partitions=2, replication_factor=2)]
