@@ -1,19 +1,27 @@
 #!/usr/bin/env python3
 import boto3
 import v20
+import yaml
 
 from enum import Enum
-from typing import List
+from typing import List, Dict
 
 from kafka import KafkaProducer
 
 client = boto3.client("ssm")
-APPLICATION_NAME = 'oanda-test'
 
 
 class MessageType(str, Enum):
-    heartbeat = 'pricing.PricingHeartbeat'
-    price = 'pricing.ClientPrice'
+    heartbeat = "pricing.PricingHeartbeat"
+    price = "pricing.ClientPrice"
+
+
+def load_config(path: str = "config.yml") -> Dict:
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+
+CONFIG = load_config()
 
 
 def get_ssm(path: str) -> str:
@@ -23,18 +31,21 @@ def get_ssm(path: str) -> str:
         return r["Parameter"]["Value"]
 
 
-def set_up_producer(bootstrap: List[str], client_id: str = APPLICATION_NAME):
-    return KafkaProducer(bootstrap_servers=bootstrap, client_id=client_id)
+def set_up_producer(
+    bootstrap_servers: List[str] = CONFIG["bootstrap_servers"],
+    client_id: str = CONFIG["app_name"],
+):
+    return KafkaProducer(bootstrap_servers=bootstrap_servers, client_id=client_id)
 
 
 def set_up_context(
     hostname: str = "stream-fxtrade.oanda.com",
     port: int = 443,
     ssl: bool = True,
-    application: str = APPLICATION_NAME,
+    application: str = CONFIG["app_name"],
     datetime_format: str = "UNIX",
 ):
-    api_token: str = get_ssm("/oanda/key")
+    api_token: str = get_ssm(CONFIG["api_token"])
     ctx = v20.Context(
         hostname,
         port,
@@ -48,8 +59,9 @@ def set_up_context(
 
 
 def main():
-    instruments: List[str] = ['AUD_USD']
-    account_id: str = get_ssm("/oanda/account")
+    producer = set_up_producer()
+    instruments: List[str] = CONFIG["instruments"]
+    account_id: str = get_ssm(CONFIG["account_id"])
     ctx = set_up_context()
     r = ctx.pricing.stream(
         account_id,
@@ -68,13 +80,8 @@ def main():
         except KeyboardInterrupt:
             break
         else:
-            producer.send('oanda-test-topic-aud_usd', message)
+            producer.send(CONFIG["topic"], message)
 
 
 if __name__ == "__main__":
-    bootstrap_servers: List[str] = [
-        'b-1.oanda-test.8zyfgp.c4.kafka.ap-southeast-2.amazonaws.com:9092',
-        'b-2.oanda-test.8zyfgp.c4.kafka.ap-southeast-2.amazonaws.com:9092'
-    ]
-    producer = set_up_producer(bootstrap_servers)
     main()
