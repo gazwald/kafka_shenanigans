@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 import boto3
 import v20
+import yaml
 
-from typing import List
+from enum import Enum
+from typing import List, Dict
 
 
 client = boto3.client("ssm")
+
+
+class MessageType(str, Enum):
+    heartbeat = 'pricing.PricingHeartbeat'
+    price = 'pricing.ClientPrice'
 
 
 def set_up_context(
@@ -47,11 +54,17 @@ def main():
     )
 
     for msg_type, msg in r.parts():
-        print(f"Type: {msg_type}, Message: {msg}")
-        if msg_type == "pricing.Heartbeat":
-            pass
-        elif msg_type == "pricing.Price":
-            pass
+        try:
+            if msg_type == MessageType.heartbeat:
+                message = msg.dict()
+            elif msg_type == MessageType.price:
+                message = msg.dict()
+            else:
+                print(f"Received unknown message type: {msg_type}")
+        except KeyboardInterrupt:
+            break
+        else:
+            print(message)
 
 
 if __name__ == "__main__":
