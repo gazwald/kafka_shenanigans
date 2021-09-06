@@ -13,7 +13,7 @@ CONFIG = load_config()
 client_id = CONFIG["app_name"] + "-create-topic"
 
 admin_client = KafkaAdminClient(
-    bootstrap_servers=CONFIG["bootstrap_servers"],
+    bootstrap_servers=CONFIG["kafka"]["bootstrap_servers"],
     client_id=client_id,
     security_protocol=CONFIG['kafka']['protocol'],
     api_version=(
