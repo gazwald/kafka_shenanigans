@@ -2,3 +2,4 @@ boto3==1.18.36
 kafka-python==2.0.2
 v20==3.0.25.0
 PyYAML==5.4.1
+aws-cdk.aws-msk==1.121.0
