@@ -14,7 +14,7 @@ class MessageType(str, Enum):
     price = "pricing.ClientPrice"
 
 
-def load_config(path: str = "config.yml") -> Dict:
+def load_config(path: str = "../config.yml") -> Dict:
     with open(path, "r") as f:
         return yaml.safe_load(f)
 
