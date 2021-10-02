@@ -4,6 +4,7 @@ import boto3
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_msk as msk
+import aws_cdk.aws_ssm as ssm
 from aws_cdk import core as cdk
 
 
@@ -18,7 +19,10 @@ class KafkaesqueStack(cdk.Stack):
         cluster = self.setup_cluster(vpc, isolated_subnets)
         bastion = self.setup_bastion(vpc, isolated_subnets)
 
-        print(cluster.bootstrap_brokers)
+        ssm.StringParameter(self, "bootstrap_ssm",
+            parameter_name="kafka/bootstrap_brokers",
+            string_value=cluster.bootstrap_brokers,
+        )
 
         # cluster.add_user("test_user")
 

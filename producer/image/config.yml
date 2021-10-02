@@ -11,9 +11,6 @@ schema:
 kafka:
   topic: "oanda-test-topic-aud_usd"
   protocol: "SSL"
-  bootstrap_servers:
-    - "b-1.oanda-test.8zyfgp.c4.kafka.ap-southeast-2.amazonaws.com:9094"
-    - "b-2.oanda-test.8zyfgp.c4.kafka.ap-southeast-2.amazonaws.com:9094"
   protocol_version:
     major: 1
     minor: 0

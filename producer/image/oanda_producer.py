@@ -27,6 +27,7 @@ def load_config(path: str = "./config.yml") -> Dict:
 CONFIG = load_config()
 ssm = boto3.client("ssm", region_name=CONFIG["region"])
 glue = boto3.client('glue', region_name=CONFIG["region"])
+msk = boto3.client('kafka', region_name=CONFIG["region"])
 
 
 def get_ssm(path: str) -> str:
@@ -37,8 +38,12 @@ def get_ssm(path: str) -> str:
 
 
 def set_up_producer():
+    bootstrap_servers = msk.get_bootstrap_brokers(
+        ClusterArn=get_ssm('kafka/cluster_arn')
+    )
+
     return KafkaProducer(
-        bootstrap_servers=CONFIG['kafka']["bootstrap_servers"],
+        bootstrap_servers=bootstrap_servers["BootstrapBrokerStringTls"],
         client_id=CONFIG["app_name"],
         security_protocol=CONFIG["kafka"]["protocol"],
         api_version=(
