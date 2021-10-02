@@ -1,16 +1,50 @@
 {
- "namespace": "instrument.avro",
- "type": "record",
- "name": "instrument",
- "fields": [
-     {"name": "type", "type": "enum", "symbols": ["HEARTBEAT", "PRICE"]},
-     {"name": "instrument", "type": "enum", "symbols": ["AUD_USD"]},
-     {"name": "time", "type": "double"},
-     {"name": "status", "type": "string"},
-     {"name": "tradeable", "type": "boolean"},
-     {"name": "bids", "type": "record", "fields": [{"name": "price", "type": "float"}, {"name": "liquidity", "type": "long"}]},
-     {"name": "asks", "type": "record", "fields": [{"name": "price", "type": "float"}, {"name": "liquidity", "type": "long"}]},
-     {"name": "closeoutBid", "type": "float"},
-     {"name": "closeoutAsk", "type": "float"},
- ]
+  "type": "record",
+  "name": "instrument",
+  "namespace": "com.instrument.avro",
+  "fields": [
+    {
+      "name": "type", "type":
+      {
+        "name": "Type",
+        "type": "enum",
+        "symbols": ["HEARTBEAT", "PRICE"]
+      }
+    },
+    {
+      "name": "instrument", "type":
+      {
+        "name": "Instrument",
+        "type": "enum",
+        "symbols": ["AUD_USD"]
+      }
+    },
+    {"name": "time", "type": "double"},
+    {"name": "status", "type": "string"},
+    {"name": "tradeable", "type": "boolean"},
+    {
+      "name": "bids", "type":
+      {
+        "type": "record",
+        "name": "Bids",
+        "fields": [
+          {"name": "price", "type": "float"},
+          {"name": "liquidity", "type": "long"}
+        ]
+      }
+    },
+    {
+      "name": "asks", "type":
+      {
+        "type": "record",
+        "name": "Asks",
+        "fields": [
+          {"name": "price", "type": "float"},
+          {"name": "liquidity", "type": "long"}
+        ]
+      }
+    },
+    {"name": "closeoutBid", "type": "float"},
+    {"name": "closeoutAsk", "type": "float"}
+  ]
 }
