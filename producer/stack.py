@@ -1,28 +1,42 @@
 #!/usr/bin/env python3
 import os
-from aws_cdk import core as cdk
+import boto3
 
+import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
-import aws_cdk.aws_ssm as ssm
+from aws_cdk import core as cdk
 
 
 class KafkaesqueProducerStack(cdk.Stack):
     def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        cluster_id = ssm.StringParameter.value_for_string_parameter(self, "my-plain-parameter-name")
+        vpc_id = self.get_ssm("/common/shared_vpc_id")
+        vpc = ec2.Vpc.from_lookup(self, "SharedVPC", vpc_id=vpc_id)
 
-        task_definition = ecs.FargateTaskDefinition(self, "TaskDef",
-            memory_limit_mi_b=512,
-            cpu=256
+        cluster = ecs.Cluster(self, "Cluster", vpc=vpc, enable_fargate_capacity_providers=True)
+
+        task_definition = ecs.FargateTaskDefinition(
+            self, "TaskDef", memory_limit_mib=512, cpu=256
         )
 
-        container = task_definition.add_container("WebContainer",
-            # Use an image from DockerHub
-            image=ecs.ContainerImage.from_registry("amazon/amazon-ecs-sample")
+        task_definition.add_container(
+            "Producer", image=ecs.ContainerImage.from_asset("./image")
         )
 
-        service = ecs.FargateService(...)
+        ecs.FargateService(
+            self,
+            "Service",
+            cluster=cluster,
+            task_definition=task_definition,
+        )
+
+    @staticmethod
+    def get_ssm(parameter: str) -> str:
+        client = boto3.client("ssm", region_name="ap-southeast-2")
+        r = client.get_parameter(Name=parameter)
+        if "Parameter" in r.keys():
+            return r["Parameter"]["Value"]
 
 
 def main():
@@ -41,4 +55,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

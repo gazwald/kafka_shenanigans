@@ -4,4 +4,5 @@ v20
 PyYAML
 aws-cdk.aws-msk
 aws_cdk.aws_glue
+aws_cdk.aws_ecs
 avro
