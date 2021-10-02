@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
+from enum import Enum
+from typing import Dict, List
+
 import boto3
 import v20
 import yaml
-
-from enum import Enum
-from typing import List, Dict
 
 from kafka import KafkaProducer
 
@@ -16,6 +16,7 @@ class MessageType(str, Enum):
 
 class SchemaNotActive(Exception):
     """Schema not marked ACTIVE in Registry"""
+
     pass
 
 
@@ -26,8 +27,8 @@ def load_config(path: str = "./config.yml") -> Dict:
 
 CONFIG = load_config()
 ssm = boto3.client("ssm", region_name=CONFIG["region"])
-glue = boto3.client('glue', region_name=CONFIG["region"])
-msk = boto3.client('kafka', region_name=CONFIG["region"])
+glue = boto3.client("glue", region_name=CONFIG["region"])
+msk = boto3.client("kafka", region_name=CONFIG["region"])
 
 
 def get_ssm(path: str) -> str:
@@ -39,7 +40,7 @@ def get_ssm(path: str) -> str:
 
 def set_up_producer():
     bootstrap_servers = msk.get_bootstrap_brokers(
-        ClusterArn=get_ssm('kafka/cluster_arn')
+        ClusterArn=get_ssm("kafka/cluster_arn")
     )
 
     return KafkaProducer(
@@ -47,21 +48,17 @@ def set_up_producer():
         client_id=CONFIG["app_name"],
         security_protocol=CONFIG["kafka"]["protocol"],
         api_version=(
-            CONFIG['kafka']['protocol_version']['major'],
-            CONFIG['kafka']['protocol_version']['minor'],
-            CONFIG['kafka']['protocol_version']['patch'],
-        )
+            CONFIG["kafka"]["protocol_version"]["major"],
+            CONFIG["kafka"]["protocol_version"]["minor"],
+            CONFIG["kafka"]["protocol_version"]["patch"],
+        ),
     )
 
 
 def get_schema():
     schema = glue.get_schema_version(
-        SchemaId={
-            'SchemaName': CONFIG["schema"]["name"]
-        },
-        SchemaVersionNumber={
-            'VersionNumber': CONFIG["schema"]["version"]
-        }
+        SchemaId={"SchemaName": CONFIG["schema"]["name"]},
+        SchemaVersionNumber={"VersionNumber": CONFIG["schema"]["version"]},
     )
 
     if schema["Status"] == "AVAILABLE":

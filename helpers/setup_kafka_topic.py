@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-import yaml
-import boto3
-
 from typing import Dict
+
+import boto3
+import yaml
+
 from kafka.admin import KafkaAdminClient, NewTopic
 
 
@@ -13,8 +14,8 @@ def load_config(path: str = "config.yml") -> Dict:
 
 CONFIG = load_config()
 ssm = boto3.client("ssm", region_name=CONFIG["region"])
-glue = boto3.client('glue', region_name=CONFIG["region"])
-msk = boto3.client('kafka', region_name=CONFIG["region"])
+glue = boto3.client("glue", region_name=CONFIG["region"])
+msk = boto3.client("kafka", region_name=CONFIG["region"])
 
 
 def get_ssm(path: str) -> str:
@@ -24,21 +25,19 @@ def get_ssm(path: str) -> str:
         return r["Parameter"]["Value"]
 
 
-bootstrap_servers = msk.get_bootstrap_brokers(
-    ClusterArn=get_ssm('kafka/cluster_arn')
-)
+bootstrap_servers = msk.get_bootstrap_brokers(ClusterArn=get_ssm("kafka/cluster_arn"))
 
 client_id = CONFIG["app_name"] + "-create-topic"
 
 admin_client = KafkaAdminClient(
-    bootstrap_servers=bootstrap_servers['BootstrapBrokerStringTls'],
+    bootstrap_servers=bootstrap_servers["BootstrapBrokerStringTls"],
     client_id=client_id,
-    security_protocol=CONFIG['kafka']['protocol'],
+    security_protocol=CONFIG["kafka"]["protocol"],
     api_version=(
-        CONFIG['kafka']['protocol_version']['major'],
-        CONFIG['kafka']['protocol_version']['minor'],
-        CONFIG['kafka']['protocol_version']['patch'],
-    )
+        CONFIG["kafka"]["protocol_version"]["major"],
+        CONFIG["kafka"]["protocol_version"]["minor"],
+        CONFIG["kafka"]["protocol_version"]["patch"],
+    ),
 )
 
 topic_list = [NewTopic(name=CONFIG["topic"], num_partitions=2, replication_factor=2)]

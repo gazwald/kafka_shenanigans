@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import os
-import boto3
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_msk as msk
 import aws_cdk.aws_ssm as ssm
+import boto3
 from aws_cdk import core as cdk
 
 
@@ -19,7 +19,9 @@ class KafkaesqueStack(cdk.Stack):
         cluster = self.setup_cluster(vpc, isolated_subnets)
         bastion = self.setup_bastion(vpc, isolated_subnets)
 
-        ssm.StringParameter(self, "bootstrap_ssm",
+        ssm.StringParameter(
+            self,
+            "bootstrap_ssm",
             parameter_name="kafka/bootstrap_brokers",
             string_value=cluster.bootstrap_brokers,
         )

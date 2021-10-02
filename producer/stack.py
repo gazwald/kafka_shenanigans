@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import os
-import boto3
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
+import boto3
 from aws_cdk import core as cdk
 
 
@@ -14,7 +14,9 @@ class KafkaesqueProducerStack(cdk.Stack):
         vpc_id = self.get_ssm("/common/shared_vpc_id")
         vpc = ec2.Vpc.from_lookup(self, "SharedVPC", vpc_id=vpc_id)
 
-        cluster = ecs.Cluster(self, "Cluster", vpc=vpc, enable_fargate_capacity_providers=True)
+        cluster = ecs.Cluster(
+            self, "Cluster", vpc=vpc, enable_fargate_capacity_providers=True
+        )
 
         task_definition = ecs.FargateTaskDefinition(
             self, "TaskDef", memory_limit_mib=512, cpu=256

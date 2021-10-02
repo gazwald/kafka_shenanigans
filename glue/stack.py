@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
-import avro.schema
 
+import avro.schema
 import aws_cdk.aws_glue as glue
 from aws_cdk import core as cdk
 
@@ -15,15 +15,10 @@ class GlueStack(cdk.Stack):
         schema_dir = "./schemas"
         for schema in os.listdir(schema_dir):
             path = os.path.join(schema_dir, schema)
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 schema = avro.schema.parse(f.read())
 
-            schemas.append(
-                self.create_schema(
-                    registry,
-                    schema
-                )
-            )
+            schemas.append(self.create_schema(registry, schema))
 
     def create_schema(
         self,
