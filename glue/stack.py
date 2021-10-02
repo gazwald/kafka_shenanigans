@@ -42,7 +42,7 @@ class GlueStack(cdk.Stack):
         )
 
     def create_registry(self):
-        return glue.CfnRegistry(self, "registry", name="")
+        return glue.CfnRegistry(self, "registry", name="oanda")
 
 
 def main():
