@@ -1,0 +1,16 @@
+{
+ "namespace": "instrument.avro",
+ "type": "record",
+ "name": "instrument",
+ "fields": [
+     {"name": "type", "type": "enum", symbols: ["HEARTBEAT", "PRICE"]},
+     {"name": "instrument", "type": "enum", symbols: ["AUD_USD"]},
+     {"name": "time", "type": "double"},
+     {"name": "status", "type": "string"},
+     {"name": "tradeable", "type": "boolean"},
+     {"name": "bids", "type": "record", fields: [{"name": "price", "type": "float"}, {"name": "liquidity", "type": "long"}],
+     {"name": "asks", "type": "record", fields: [{"name": "price", "type": "float"}, {"name": "liquidity", "type": "long"}],
+     {"name": "closeoutBid", "type": "float"},
+     {"name": "closeoutAsk", "type": "float"},
+ ]
+}
