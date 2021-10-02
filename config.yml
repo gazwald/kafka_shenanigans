@@ -5,6 +5,9 @@ api_token: "/oanda/key"
 account_id: "/oanda/account"
 instruments:
   - "AUD_USD"
+schema:
+  name: instrument
+  version: 1
 kafka:
   topic: "oanda-test-topic-aud_usd"
   protocol: "SSL"
