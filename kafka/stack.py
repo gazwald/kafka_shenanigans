@@ -16,17 +16,10 @@ class KafkaesqueStack(cdk.Stack):
         vpc = ec2.Vpc.from_lookup(self, "SharedVPC", vpc_id=vpc_id)
         isolated_subnets = ec2.SubnetSelection(subnets=vpc.isolated_subnets)
 
-        cluster = self.setup_cluster(vpc, isolated_subnets)
-        bastion = self.setup_bastion(vpc, isolated_subnets)
+        self.cluster = self.setup_cluster(vpc, isolated_subnets)
 
-        ssm.StringParameter(
-            self,
-            "bootstrap_ssm",
-            parameter_name="kafka/bootstrap_brokers",
-            string_value=cluster.bootstrap_brokers,
-        )
-
-        # cluster.add_user("test_user")
+        self.create_ssm_parameters()
+        self.cluster.add_user("test_user")
 
     def setup_cluster(
         self,
@@ -49,14 +42,25 @@ class KafkaesqueStack(cdk.Stack):
             vpc_subnets=subnets,
             ebs_storage_info=storage,
             removal_policy=cdk.RemovalPolicy.DESTROY,
+            client_authentication=msk.ClientAuthentication.sasl(scram=True),
         )
 
-    def setup_bastion(
-        self, vpc: ec2.Vpc, subnets: ec2.SubnetSelection
-    ) -> ec2.BastionHostLinux:
-        return ec2.BastionHostLinux(
-            self, "BastionHost", vpc=vpc, subnet_selection=subnets
-        )
+    def create_ssm_parameters(self):
+        attrs = [
+            "bootstrap_brokers",
+            "bootstrap_brokers_sasl_scram",
+            "bootstrap_brokers_tls",
+            "zookeeper_connection_string",
+            "zookeeper_connection_string_tls",
+        ]
+
+        for attr in attrs:
+            ssm.StringParameter(
+                self,
+                attr,
+                parameter_name=f"/kafka/{attr}",
+                string_value=getattr(self.cluster, attr),
+            )
 
     @staticmethod
     def get_ssm(parameter: str) -> str:
