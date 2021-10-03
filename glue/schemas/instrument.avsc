@@ -19,29 +19,37 @@
         "symbols": ["AUD_USD"]
       }
     },
-    {"name": "time", "type": "double"},
+    {"name": "time", "type": "string"},
     {"name": "status", "type": "string"},
     {"name": "tradeable", "type": "boolean"},
     {
       "name": "bids", "type":
       {
-        "type": "record",
+        "type": "array",
         "name": "Bids",
-        "fields": [
-          {"name": "price", "type": "float"},
-          {"name": "liquidity", "type": "long"}
-        ]
+        "items": {
+          "type": "record",
+          "name": "bid",
+          "fields": [
+            {"name": "price", "type": "float"},
+            {"name": "liquidity", "type": "long"}
+          ]
+        }
       }
     },
     {
       "name": "asks", "type":
       {
-        "type": "record",
+        "type": "array",
         "name": "Asks",
-        "fields": [
-          {"name": "price", "type": "float"},
-          {"name": "liquidity", "type": "long"}
-        ]
+        "items": {
+          "type": "record",
+          "name": "ask",
+          "fields": [
+            {"name": "price", "type": "float"},
+            {"name": "liquidity", "type": "long"}
+          ]
+        }
       }
     },
     {"name": "closeoutBid", "type": "float"},
