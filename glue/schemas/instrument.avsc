@@ -16,7 +16,7 @@
       {
         "name": "Instrument",
         "type": "enum",
-        "symbols": ["AUD_USD"]
+        "symbols": ["AUD_USD", "USD_AUD"]
       }
     },
     {"name": "time", "type": "string"},
