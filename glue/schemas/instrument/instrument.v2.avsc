@@ -1,0 +1,58 @@
+{
+  "type": "record",
+  "name": "instrument",
+  "namespace": "com.instrument.avro",
+  "fields": [
+    {
+      "name": "type", "type":
+      {
+        "name": "Type",
+        "type": "enum",
+        "symbols": ["HEARTBEAT", "PRICE"]
+      }
+    },
+    {
+      "name": "instrument", "type":
+      {
+        "name": "Instrument",
+        "type": "enum",
+        "symbols": ["AUD_USD", "USD_AUD", "EUR_USD"]
+      }
+    },
+    {"name": "time", "type": "string"},
+    {"name": "status", "type": "string"},
+    {"name": "tradeable", "type": "boolean"},
+    {
+      "name": "bids", "type":
+      {
+        "type": "array",
+        "name": "Bids",
+        "items": {
+          "type": "record",
+          "name": "bid",
+          "fields": [
+            {"name": "price", "type": "float"},
+            {"name": "liquidity", "type": "long"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "asks", "type":
+      {
+        "type": "array",
+        "name": "Asks",
+        "items": {
+          "type": "record",
+          "name": "ask",
+          "fields": [
+            {"name": "price", "type": "float"},
+            {"name": "liquidity", "type": "long"}
+          ]
+        }
+      }
+    },
+    {"name": "closeoutBid", "type": "float"},
+    {"name": "closeoutAsk", "type": "float"}
+  ]
+}
