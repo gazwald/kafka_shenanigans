@@ -2,6 +2,7 @@
 import os
 
 import aws_cdk.aws_ec2 as ec2
+import aws_cdk.aws_kms as kms
 import aws_cdk.aws_msk as msk
 import aws_cdk.aws_ssm as ssm
 import boto3
@@ -19,7 +20,6 @@ class KafkaesqueStack(cdk.Stack):
         self.cluster = self.setup_cluster(vpc, isolated_subnets)
 
         self.create_ssm_parameters()
-        self.cluster.add_user("test_user")
 
     def setup_cluster(
         self,
@@ -32,35 +32,29 @@ class KafkaesqueStack(cdk.Stack):
         instance_type = ec2.InstanceType.of(instance_class, instance_type)
         storage = msk.EbsStorageInfo(volume_size=volume_size)
 
+        kms_key = kms.Key(self, "key")
+        auth = msk.ClientAuthentication.sasl(iam=True, key=kms_key, scram=False)
+
         return msk.Cluster(
             self,
             "cluster",
             cluster_name="kafkaesque",
             instance_type=instance_type,
-            kafka_version=msk.KafkaVersion.V2_8_0,
+            kafka_version=msk.KafkaVersion.V2_8_1,
             vpc=vpc,
             vpc_subnets=subnets,
             ebs_storage_info=storage,
             removal_policy=cdk.RemovalPolicy.DESTROY,
-            client_authentication=msk.ClientAuthentication.sasl(scram=True),
+            client_authentication=auth,
         )
 
     def create_ssm_parameters(self):
-        attrs = [
-            "bootstrap_brokers",
-            "bootstrap_brokers_sasl_scram",
-            "bootstrap_brokers_tls",
-            "zookeeper_connection_string",
-            "zookeeper_connection_string_tls",
-        ]
-
-        for attr in attrs:
-            ssm.StringParameter(
-                self,
-                attr,
-                parameter_name=f"/kafka/{attr}",
-                string_value=getattr(self.cluster, attr),
-            )
+        ssm.StringParameter(
+            self,
+            "cluster-arn",
+            parameter_name="/oanda/kafka/cluster_arn",
+            string_value=self.cluster.cluster_arn
+        )
 
     @staticmethod
     def get_ssm(parameter: str) -> str:
@@ -68,6 +62,8 @@ class KafkaesqueStack(cdk.Stack):
         r = client.get_parameter(Name=parameter)
         if "Parameter" in r.keys():
             return r["Parameter"]["Value"]
+
+        return ""
 
 
 def main():

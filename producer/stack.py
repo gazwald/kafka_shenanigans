@@ -13,9 +13,8 @@ class KafkaesqueProducerStack(cdk.Stack):
 
         vpc_id = self.get_ssm("/common/shared_vpc_id")
         vpc = ec2.Vpc.from_lookup(self, "SharedVPC", vpc_id=vpc_id)
-
-        cluster = ecs.Cluster(
-            self, "Cluster", vpc=vpc, enable_fargate_capacity_providers=True
+        cluster = ecs.Cluster.from_cluster_attributes(
+            self, "cluster", vpc=vpc, cluster_name="oanda", security_groups=[]
         )
 
         task_definition = ecs.FargateTaskDefinition(
