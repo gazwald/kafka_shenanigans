@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
+import os
 from enum import Enum
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
+import avro.io
+import avro.schema
 import boto3
 import v20
-import yaml
-
 from kafka import KafkaProducer
 
 
 class MessageType(str, Enum):
-    heartbeat = "pricing.PricingHeartbeat"
-    price = "pricing.ClientPrice"
+    heartbeat: str = "pricing.PricingHeartbeat"
+    price: str = "pricing.ClientPrice"
 
 
 class SchemaNotActive(Exception):
@@ -20,49 +21,61 @@ class SchemaNotActive(Exception):
     pass
 
 
-def load_config(path: str = "./config.yml") -> Dict:
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+REGION: str = os.getenv("AWS_REGION", "ap-southeast-2")
+ssm = boto3.client("ssm", region_name=REGION)
+glue = boto3.client("glue", region_name=REGION)
+msk = boto3.client("kafka", region_name=REGION)
 
 
-CONFIG = load_config()
-ssm = boto3.client("ssm", region_name=CONFIG["region"])
-glue = boto3.client("glue", region_name=CONFIG["region"])
-msk = boto3.client("kafka", region_name=CONFIG["region"])
+def get_ssm(path: str, default: Optional[str] = '') -> str:
+    try:
+        r: Dict[str, Any] = ssm.get_parameter(Name=path, WithDecryption=True)
+    except ssm.exceptions.ParameterNotFound:
+        if default:
+            return default
+        else:
+            pass
+    else:
+        if "Parameter" in r.keys():
+            return r["Parameter"]["Value"]
 
-
-def get_ssm(path: str) -> str:
-    r = ssm.get_parameter(Name=path, WithDecryption=True)
-
-    if "Parameter" in r.keys():
-        return r["Parameter"]["Value"]
+    return ""
 
 
 def set_up_producer():
-    bootstrap_servers = msk.get_bootstrap_brokers(
-        ClusterArn=get_ssm("kafka/cluster_arn")
-    )
-
-    return KafkaProducer(
-        bootstrap_servers=bootstrap_servers["BootstrapBrokerStringTls"],
-        client_id=CONFIG["app_name"],
-        security_protocol=CONFIG["kafka"]["protocol"],
-        api_version=(
-            CONFIG["kafka"]["protocol_version"]["major"],
-            CONFIG["kafka"]["protocol_version"]["minor"],
-            CONFIG["kafka"]["protocol_version"]["patch"],
-        ),
-    )
+    try:
+        bootstrap_servers: Dict[str, Any] = msk.get_bootstrap_brokers(
+            ClusterArn=get_ssm("/kafka/cluster_arn")
+        )
+    except msk.exceptions.BadRequestException:
+        return None
+    else:
+        return KafkaProducer(
+            bootstrap_servers=bootstrap_servers["BootstrapBrokerStringTls"],
+            client_id=os.getenv("APP_NAME", "oanda_producer"),
+            security_protocol=os.getenv("SECURITY_PROTOCOL", "SSL"),
+            api_version=(1, 0, 0),
+        )
 
 
 def get_schema():
-    schema = glue.get_schema_version(
-        SchemaId={"SchemaName": CONFIG["schema"]["name"]},
-        SchemaVersionNumber={"VersionNumber": CONFIG["schema"]["version"]},
+    version: str = os.getenv("SCHEMA_VERSION", "")
+    if version:
+        version_number: Dict[str, int] = {"VersionNumber": int(version)}
+    else:
+        version_number: Dict[str, bool] = {"LatestVersion": True}
+
+    schema: Dict[str, Any] = glue.get_schema_version(
+        SchemaId={
+            "RegistryName": os.getenv("SCHEMA_REGISTRY", "oanda"),
+            "SchemaName": os.getenv("SCHEMA_NAME", "instrument"),
+        },
+        SchemaVersionNumber=version_number,
     )
 
     if schema["Status"] == "AVAILABLE":
-        return schema["SchemaDefinition"]
+        s = avro.schema.parse(schema["SchemaDefinition"])
+        return s
     else:
         raise SchemaNotActive
 
@@ -73,12 +86,12 @@ def set_up_context(
     ssl: bool = True,
     datetime_format: str = "UNIX",
 ):
-    api_token: str = get_ssm(CONFIG["api_token"])
+    api_token: str = get_ssm("/oanda/key")
     ctx = v20.Context(
         hostname,
         port,
         ssl,
-        application=CONFIG["app_name"],
+        application=os.getenv("APP_NAME", "oanda_producer"),
         token=api_token,
         datetime_format=datetime_format,
     )
@@ -86,13 +99,14 @@ def set_up_context(
     return ctx
 
 
-def main():
-    set_up_producer()
+def main(send_to_kafka: bool = False):
+    producer = set_up_producer()
+    topic = get_ssm("/kafka/topic", "instrument")
     schema = get_schema()
 
     if schema:
-        instruments: List[str] = CONFIG["instruments"]
-        account_id: str = get_ssm(CONFIG["account_id"])
+        instruments: List[str] = ["AUD_USD"]
+        account_id: str = get_ssm("/oanda/account")
         ctx = set_up_context()
         r = ctx.pricing.stream(
             account_id,
@@ -111,8 +125,13 @@ def main():
             except KeyboardInterrupt:
                 break
             else:
-                print(message)
-                # producer.send(CONFIG['kafka']["topic"], message)
+                if avro.io.validate(schema, message):
+                    if send_to_kafka:
+                        producer.send(topic, message)
+                    else:
+                        print(message)
+                else:
+                    print(f"Recieved message did not parse validation: {message}")
 
 
 if __name__ == "__main__":
