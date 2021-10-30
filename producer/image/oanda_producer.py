@@ -23,11 +23,9 @@ class SchemaNotActive(Exception):
 
 REGION: str = os.getenv("AWS_REGION", "ap-southeast-2")
 ssm = boto3.client("ssm", region_name=REGION)
-glue = boto3.client("glue", region_name=REGION)
-msk = boto3.client("kafka", region_name=REGION)
 
 
-def get_ssm(path: str, default: Optional[str] = '') -> str:
+def get_ssm(path: str, default: Optional[str] = "") -> str:
     try:
         r: Dict[str, Any] = ssm.get_parameter(Name=path, WithDecryption=True)
     except ssm.exceptions.ParameterNotFound:
@@ -43,15 +41,16 @@ def get_ssm(path: str, default: Optional[str] = '') -> str:
 
 
 def set_up_producer():
+    msk = boto3.client("kafka", region_name=REGION)
     try:
         bootstrap_servers: Dict[str, Any] = msk.get_bootstrap_brokers(
-            ClusterArn=get_ssm("/kafka/cluster_arn")
+            ClusterArn=get_ssm("/oanda/kafka/cluster_arn")
         )
     except msk.exceptions.BadRequestException:
         return None
     else:
         return KafkaProducer(
-            bootstrap_servers=bootstrap_servers["BootstrapBrokerStringTls"],
+            bootstrap_servers=bootstrap_servers["BootstrapBrokerStringSaslIam"],
             client_id=os.getenv("APP_NAME", "oanda_producer"),
             security_protocol=os.getenv("SECURITY_PROTOCOL", "SSL"),
             api_version=(1, 0, 0),
@@ -59,6 +58,7 @@ def set_up_producer():
 
 
 def get_schema():
+    glue = boto3.client("glue", region_name=REGION)
     version: str = os.getenv("SCHEMA_VERSION", "")
     if version:
         version_number: Dict[str, int] = {"VersionNumber": int(version)}
@@ -101,7 +101,7 @@ def set_up_context(
 
 def main(send_to_kafka: bool = False):
     producer = set_up_producer()
-    topic = get_ssm("/kafka/topic", "instrument")
+    topic = get_ssm("/oanda/kafka/topic", "instrument")
     schema = get_schema()
 
     if schema:
