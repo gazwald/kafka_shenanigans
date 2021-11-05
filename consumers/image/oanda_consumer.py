@@ -82,9 +82,6 @@ def set_up_context(
     ssl: bool = True,
     datetime_format: str = "UNIX",
 ):
-    """
-    TODO: This needs to be the trading API, not the Streaming API
-    """
     api_token: str = get_ssm("/oanda/key")
     ctx = v20.Context(
         hostname,
