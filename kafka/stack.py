@@ -32,8 +32,11 @@ class KafkaesqueStack(cdk.Stack):
         instance_type = ec2.InstanceType.of(instance_class, instance_type)
         storage = msk.EbsStorageInfo(volume_size=volume_size)
 
+        """
+        TODO: Turn this back on when IAM support is available
         kms_key = kms.Key(self, "key")
         auth = msk.ClientAuthentication.sasl(iam=True, key=kms_key, scram=False)
+        """
 
         return msk.Cluster(
             self,
@@ -45,7 +48,7 @@ class KafkaesqueStack(cdk.Stack):
             vpc_subnets=subnets,
             ebs_storage_info=storage,
             removal_policy=cdk.RemovalPolicy.DESTROY,
-            client_authentication=auth,
+            # client_authentication=auth,
         )
 
     def create_ssm_parameters(self):

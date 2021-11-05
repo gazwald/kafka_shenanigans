@@ -101,7 +101,7 @@ def set_up_context(
 
 def main(send_to_kafka: bool = False):
     producer = set_up_producer()
-    topic = get_ssm("/oanda/kafka/topic", "instrument")
+    topic = get_ssm("/oanda/kafka/topic", "oanda_instrument")
     schema = get_schema()
 
     if schema:

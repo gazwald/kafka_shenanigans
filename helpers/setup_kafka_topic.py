@@ -31,7 +31,7 @@ def main():
         api_version=(1, 0, 0),
     )
 
-    topics = [{"name": "oanda_instrument", "partitions": 2, "replication": 2}]
+    topics = [{"name": "oanda_instrument", "partitions": 3, "replication": 3}]
 
     topic_list = list()
 

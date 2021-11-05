@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import avro.io
 import avro.schema
@@ -36,6 +35,7 @@ def get_ssm(path: str, default: Optional[str] = "") -> str:
 
 
 def set_up_consumer():
+    topic = get_ssm("/oanda/kafka/topic", "oanda_instrument")
     msk = boto3.client("kafka", region_name=REGION)
     try:
         bootstrap_servers: Dict[str, Any] = msk.get_bootstrap_brokers(
@@ -44,9 +44,10 @@ def set_up_consumer():
     except msk.exceptions.BadRequestException:
         return None
     else:
-        return KafkaProducer(
+        return KafkaConsumer(
+            topic,
+            group_id=os.getenv("APP_NAME", "oanda_consumer"),
             bootstrap_servers=bootstrap_servers["BootstrapBrokerStringSaslIam"],
-            client_id=os.getenv("APP_NAME", "oanda_consumer"),
             security_protocol=os.getenv("SECURITY_PROTOCOL", "SSL"),
             api_version=(1, 0, 0),
         )
@@ -76,14 +77,14 @@ def get_schema():
 
 
 def set_up_context(
-    """
-    TODO: This needs to be the trading API, not the Streaming API
-    """
-    hostname: str = "stream-fxtrade.oanda.com",
+    hostname: str = "api-fxtrade.oanda.com",
     port: int = 443,
     ssl: bool = True,
     datetime_format: str = "UNIX",
 ):
+    """
+    TODO: This needs to be the trading API, not the Streaming API
+    """
     api_token: str = get_ssm("/oanda/key")
     ctx = v20.Context(
         hostname,
@@ -97,12 +98,35 @@ def set_up_context(
     return ctx
 
 
+def create_order(params):
+    r = ctx.order.market(
+        account_id,
+        **params
+    )
+
+    return r
+
+
+def do_something_with_data(message):
+    pass
+
+
 def main():
     consumer = set_up_consumer()
-    topic = get_ssm("/oanda/kafka/topic", "instrument")
     schema = get_schema()
 
-    # Make money
+    for message in consumer:
+        if avro.io.validate(schema, message):
+            r = do_something_with_data(message)
+            if r:
+                create_order()
+            else:
+                continue
+        else:
+            pass
+
 
 if __name__ == "__main__":
+    account_id: str = get_ssm("/oanda/account")
+    ctx = set_up_context()
     main()
