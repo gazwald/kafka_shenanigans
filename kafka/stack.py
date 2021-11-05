@@ -15,9 +15,9 @@ class KafkaesqueStack(cdk.Stack):
 
         vpc_id = self.get_ssm("/common/shared_vpc_id")
         vpc = ec2.Vpc.from_lookup(self, "SharedVPC", vpc_id=vpc_id)
-        isolated_subnets = ec2.SubnetSelection(subnets=vpc.isolated_subnets)
+        public_subnets = ec2.SubnetSelection(subnets=vpc.public_subnets)
 
-        self.cluster = self.setup_cluster(vpc, isolated_subnets)
+        self.cluster = self.setup_cluster(vpc, public_subnets)
 
         self.create_ssm_parameters()
 
