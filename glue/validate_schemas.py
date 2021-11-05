@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import os
-import avro.schema
-import avro.io
 
+import avro.io
+import avro.schema
 from fixtures import price_example_1, price_example_2
 
 

@@ -56,7 +56,7 @@ class KafkaesqueStack(cdk.Stack):
             self,
             "cluster-arn",
             parameter_name="/oanda/kafka/cluster_arn",
-            string_value=self.cluster.cluster_arn
+            string_value=self.cluster.cluster_arn,
         )
 
     @staticmethod

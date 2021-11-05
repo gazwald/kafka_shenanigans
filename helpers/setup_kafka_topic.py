@@ -3,6 +3,7 @@ import os
 from typing import Any, Dict
 
 import boto3
+
 from kafka.admin import KafkaAdminClient, NewTopic
 
 ssm = boto3.client("ssm", region_name=os.getenv("AWS_REGION", "ap-southeast-2"))

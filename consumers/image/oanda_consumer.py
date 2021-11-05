@@ -6,6 +6,7 @@ import avro.io
 import avro.schema
 import boto3
 import v20
+
 from kafka import KafkaConsumer
 
 
@@ -96,10 +97,7 @@ def set_up_context(
 
 
 def create_order(params):
-    r = ctx.order.market(
-        account_id,
-        **params
-    )
+    r = ctx.order.market(account_id, **params)
 
     return r
 

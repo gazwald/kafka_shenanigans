@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import os
-import boto3
 
 import avro.schema
 import aws_cdk.aws_glue as glue
+import boto3
 from aws_cdk import core as cdk
 
 

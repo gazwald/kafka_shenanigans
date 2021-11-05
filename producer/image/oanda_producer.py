@@ -7,6 +7,7 @@ import avro.io
 import avro.schema
 import boto3
 import v20
+
 from kafka import KafkaProducer
 
 
