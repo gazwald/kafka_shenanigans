@@ -1,21 +1,13 @@
 #!/usr/bin/env python3
-from typing import Dict
+import os
+from typing import Any, Dict
 
 import boto3
-import yaml
-
 from kafka.admin import KafkaAdminClient, NewTopic
 
-
-def load_config(path: str = "config.yml") -> Dict:
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
-
-
-CONFIG = load_config()
-ssm = boto3.client("ssm", region_name=CONFIG["region"])
-glue = boto3.client("glue", region_name=CONFIG["region"])
-msk = boto3.client("kafka", region_name=CONFIG["region"])
+ssm = boto3.client("ssm", region_name=os.getenv("AWS_REGION", "ap-southeast-2"))
+glue = boto3.client("glue", region_name=os.getenv("AWS_REGION", "ap-southeast-2"))
+msk = boto3.client("kafka", region_name=os.getenv("AWS_REGION", "ap-southeast-2"))
 
 
 def get_ssm(path: str) -> str:
@@ -24,21 +16,36 @@ def get_ssm(path: str) -> str:
     if "Parameter" in r.keys():
         return r["Parameter"]["Value"]
 
+    return ""
 
-bootstrap_servers = msk.get_bootstrap_brokers(ClusterArn=get_ssm("kafka/cluster_arn"))
 
-client_id = CONFIG["app_name"] + "-create-topic"
+def main():
+    bootstrap_servers: Dict[str, Any] = msk.get_bootstrap_brokers(
+        ClusterArn=get_ssm("/oanda/kafka/cluster_arn")
+    )
 
-admin_client = KafkaAdminClient(
-    bootstrap_servers=bootstrap_servers["BootstrapBrokerStringTls"],
-    client_id=client_id,
-    security_protocol=CONFIG["kafka"]["protocol"],
-    api_version=(
-        CONFIG["kafka"]["protocol_version"]["major"],
-        CONFIG["kafka"]["protocol_version"]["minor"],
-        CONFIG["kafka"]["protocol_version"]["patch"],
-    ),
-)
+    admin_client = KafkaAdminClient(
+        bootstrap_servers=bootstrap_servers["BootstrapBrokerStringSaslIam"],
+        client_id=os.getenv("APP_NAME", "oanda_topic_creator"),
+        security_protocol=os.getenv("SECURITY_PROTOCOL", "SSL"),
+        api_version=(1, 0, 0),
+    )
 
-topic_list = [NewTopic(name=CONFIG["topic"], num_partitions=2, replication_factor=2)]
-admin_client.create_topics(new_topics=topic_list, validate_only=False)
+    topics = [{"name": "oanda_instrument", "partitions": 2, "replication": 2}]
+
+    topic_list = list()
+
+    for topic in topics:
+        topic_list.append(
+            NewTopic(
+                name=topic["name"],
+                num_partitions=topic["partitions"],
+                replication_factor=topic["replication"],
+            )
+        )
+
+    admin_client.create_topics(new_topics=topic_list, validate_only=False)
+
+
+if __name__ == "__main__":
+    main()
