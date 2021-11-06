@@ -48,7 +48,7 @@ def set_up_consumer():
         return KafkaConsumer(
             topic,
             group_id=os.getenv("APP_NAME", "oanda_consumer"),
-            bootstrap_servers=bootstrap_servers["BootstrapBrokerString"],
+            bootstrap_servers=bootstrap_servers["BootstrapBrokerStringTls"],
             security_protocol=os.getenv("SECURITY_PROTOCOL", "SSL"),
             api_version=(1, 0, 0),
         )
@@ -103,22 +103,24 @@ def create_order(params):
 
 
 def do_something_with_data(message):
-    pass
+    return None
 
 
 def main():
+    print("Starting...")
     consumer = set_up_consumer()
     schema = get_schema()
 
     for message in consumer:
+        print(message)
         if avro.io.validate(schema, message):
             r = do_something_with_data(message)
             if r:
                 create_order()
-            else:
-                continue
         else:
             pass
+
+    print("Ending.")
 
 
 if __name__ == "__main__":

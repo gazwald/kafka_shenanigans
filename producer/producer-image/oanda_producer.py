@@ -51,7 +51,7 @@ def set_up_producer():
         return None
     else:
         return KafkaProducer(
-            bootstrap_servers=bootstrap_servers["BootstrapBrokerString"],
+            bootstrap_servers=bootstrap_servers["BootstrapBrokerStringTls"],
             client_id=os.getenv("APP_NAME", "oanda_producer"),
             security_protocol=os.getenv("SECURITY_PROTOCOL", "SSL"),
             api_version=(1, 0, 0),
@@ -100,7 +100,8 @@ def set_up_context(
     return ctx
 
 
-def main(send_to_kafka: bool = False):
+def main(send_to_kafka: bool = True):
+    print("Starting...")
     producer = set_up_producer()
     topic = get_ssm("/oanda/kafka/topic", "oanda_instrument")
     schema = get_schema()
@@ -133,6 +134,8 @@ def main(send_to_kafka: bool = False):
                         print(message)
                 else:
                     print(f"Recieved message did not parse validation: {message}")
+
+    print("Ending.")
 
 
 if __name__ == "__main__":
