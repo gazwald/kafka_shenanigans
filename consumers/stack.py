@@ -101,7 +101,7 @@ class KafkaesqueConsumerStack(cdk.Stack):
             self, "cluster", vpc=vpc, cluster_name="oanda", security_groups=[]
         )
 
-        ConsumerConstruct(self, "blah", name="blah", cluster=cluster)
+        ConsumerConstruct(self, "test", name="test", cluster=cluster)
 
     @staticmethod
     def get_ssm(parameter: str) -> str:
