@@ -75,7 +75,10 @@ class ProducerConstruct(cdk.Construct):
                 "kafka-cluster:DescribeTopic",
                 "kafka-cluster:WriteData",
             ],
-            resources=[self.get_ssm("/oanda/kafka/cluster_arn")],
+            resources=[
+                self.get_ssm("/oanda/kafka/cluster_arn"),
+                "arn:aws:kafka:*:*:topic/kafkaesque/*"
+            ],
         )
 
     @staticmethod
