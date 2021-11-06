@@ -48,7 +48,7 @@ def set_up_consumer():
         return KafkaConsumer(
             topic,
             group_id=os.getenv("APP_NAME", "oanda_consumer"),
-            bootstrap_servers=bootstrap_servers["BootstrapBrokerStringSaslIam"],
+            bootstrap_servers=bootstrap_servers["BootstrapBrokerString"],
             security_protocol=os.getenv("SECURITY_PROTOCOL", "SSL"),
             api_version=(1, 0, 0),
         )

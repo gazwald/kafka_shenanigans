@@ -30,8 +30,20 @@ class KafkaesqueStack(cdk.Stack):
         volume_size: int = 100,
     ) -> msk.Cluster:
         instance_type = ec2.InstanceType.of(instance_class, instance_type)
+        security_group = ec2.SecurityGroup(
+            self,
+            "MSKSecurityGroup",
+            vpc=vpc,
+            description="Kafka access",
+            allow_all_outbound=True,
+        )
+        security_group.add_ingress_rule(
+            ec2.Peer.ipv4("172.17.0.0/16"), ec2.Port.all_tcp(), "Allow VPC access"
+        )
         storage = msk.EbsStorageInfo(volume_size=volume_size)
-
+        monitoring = msk.MonitoringConfiguration(
+            cluster_monitoring_level=msk.ClusterMonitoringLevel.PER_TOPIC_PER_BROKER
+        )
         """
         TODO: Turn this back on when IAM support is available
         kms_key = kms.Key(self, "key")
@@ -48,6 +60,8 @@ class KafkaesqueStack(cdk.Stack):
             vpc_subnets=subnets,
             ebs_storage_info=storage,
             removal_policy=cdk.RemovalPolicy.DESTROY,
+            monitoring=monitoring,
+            security_groups=[security_group],
             # client_authentication=auth,
         )
 

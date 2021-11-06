@@ -51,7 +51,7 @@ def set_up_producer():
         return None
     else:
         return KafkaProducer(
-            bootstrap_servers=bootstrap_servers["BootstrapBrokerStringSaslIam"],
+            bootstrap_servers=bootstrap_servers["BootstrapBrokerString"],
             client_id=os.getenv("APP_NAME", "oanda_producer"),
             security_protocol=os.getenv("SECURITY_PROTOCOL", "SSL"),
             api_version=(1, 0, 0),

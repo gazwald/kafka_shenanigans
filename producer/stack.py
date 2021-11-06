@@ -77,7 +77,7 @@ class ProducerConstruct(cdk.Construct):
             ],
             resources=[
                 self.get_ssm("/oanda/kafka/cluster_arn"),
-                "arn:aws:kafka:*:*:topic/kafkaesque/*"
+                "arn:aws:kafka:*:*:topic/kafkaesque/*",
             ],
         )
 
