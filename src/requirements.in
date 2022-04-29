@@ -1,0 +1,9 @@
+PyYAML
+avro
+boto3
+boto3-stubs
+kafka-python
+mypy-boto3-glue
+mypy-boto3-kafka
+mypy-boto3-ssm
+v20
